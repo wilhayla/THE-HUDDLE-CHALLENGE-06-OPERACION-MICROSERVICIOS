@@ -1,0 +1,33 @@
+# Utiliza una imagen base de Python. La versión "slim" es más ligera.
+FROM python:3.13-slim
+
+# Establece el directorio de trabajo dentro del contenedor.
+WORKDIR /app
+
+# Copia el archivo de requerimientos de Python.
+# Esta es una capa que Docker puede cachear para acelerar las futuras construcciones.
+COPY requirements.txt .
+
+# Instala las dependencias. La flag "--no-cache-dir" optimiza el espacio.
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Instala el cliente de PostgreSQL
+RUN apt-get update && apt-get install -y postgresql-client
+
+# Copia el resto del código de la aplicación al contenedor.
+COPY . .
+
+# Hace que el script de inicio sea ejecutable.
+RUN chmod +x ./start.sh
+
+#    Define el comando para ejecutar el script de inicio cuando se inicie el contenedor.
+#    Esto reemplaza el CMD ["uvicorn", "main:app", ...]
+ENTRYPOINT ["./start.sh"]
+
+# Expone el puerto que usará el microservicio.
+# Esto es solo documentación y no publica el puerto.
+EXPOSE 8000
+
+# Comando para ejecutar el microservicio con Uvicorn.
+# Este comando se ejecutará cuando el contenedor se inicie.
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
